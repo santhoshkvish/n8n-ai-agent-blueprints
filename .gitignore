@@ -1,0 +1,17 @@
+# n8n export quirks
+*.n8n_backup
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Local env files (in case anyone adds one for local n8n dev)
+.env
+.env.local
+
+# Node (in case tooling gets added later, e.g. lint scripts)
+node_modules/
