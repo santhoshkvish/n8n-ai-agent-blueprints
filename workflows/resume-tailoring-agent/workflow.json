@@ -1,71 +1,71 @@
 {
-  "name": "Resume Tailoring Agent",
+  "name": "Resume Tailoring Agent (Web App)",
   "nodes": [
     {
       "parameters": {
-        "public": true,
-        "initialMessages": "Hi there! 👋\nPaste the job description here to which you need a customized resume",
+        "httpMethod": "POST",
+        "path": "resume-tailor",
+        "responseMode": "responseNode",
         "options": {
-          "allowFileUploads": true,
-          "inputPlaceholder": "Paste the job description here to which you need a customized resumeuestion..",
-          "title": "Hi there! 👋"
+          "allowedOrigins": "*"
         }
       },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.4,
-      "position": [
-        0,
-        0
-      ],
-      "id": "bd6bd399-b967-47f2-ab98-9df8cb9bf1a0",
-      "name": "When chat message received",
-      "webhookId": "82bc0dfb-2b80-4847-952e-b093cede4d47"
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-528, -32],
+      "id": "a1e5f9d2-1111-4a2b-9c3d-000000000001",
+      "name": "Webhook - Resume Tailor",
+      "webhookId": "resume-tailor-webapp-001"
+    },
+    {
+      "parameters": {
+        "httpMethod": "OPTIONS",
+        "path": "resume-tailor",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-528, 160],
+      "id": "a1e5f9d2-1111-4a2b-9c3d-000000000002",
+      "name": "Webhook - CORS Preflight",
+      "webhookId": "resume-tailor-webapp-002"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "",
+        "options": {
+          "responseCode": 204,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [-304, 160],
+      "id": "a1e5f9d2-1111-4a2b-9c3d-000000000003",
+      "name": "Respond - CORS Preflight"
     },
     {
       "parameters": {
         "operation": "pdf",
-        "binaryPropertyName": "={{ $json.files[0].binaryKey }}",
+        "binaryPropertyName": "resume",
         "options": {}
       },
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1.1,
-      "position": [
-        224,
-        0
-      ],
-      "id": "b562d2ee-ee01-44d6-a285-26bdfb3c55d2",
-      "name": "Extract from File"
-    },
-    {
-      "parameters": {
-        "html": "{{ $json.output }}"
-      },
-      "type": "n8n-nodes-base.html",
-      "typeVersion": 1.2,
-      "position": [
-        848,
-        96
-      ],
-      "id": "c20ff20b-ffaf-4f05-a88a-c29e55aff3b0",
-      "name": "HTML",
-      "alwaysOutputData": false
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=<job description>\n{{ $('When chat message received').item.json.chatInput }}\n</job description> \n\n<resume>\n{{ $json.text }}\n</resume>",
-        "options": {
-          "systemMessage": "<role>\nYou are the Resume Tailoring Agent, a professional and meticulous career optimization assistant. Your personality is precise, strategic, and deeply knowledgeable about hiring practices, ATS (Applicant Tracking System) optimization, and resume best practices. Your primary function is to receive a candidate's existing resume content and a target job description, then produce a newly tailored resume that maximizes the candidate's alignment with the role.\n</role>\n\n<instructions>\n<goal>\nYour primary goal is to generate a fully rewritten, job-targeted resume from two inputs: the candidate's current resume content and the target job description. The tailored resume must:\n1. **Preserve and reframe** as much of the candidate's original experience, skills, projects, and achievements as possible — never discard information unless it is entirely irrelevant.\n2. **Align language, keywords, and emphasis** with the job description to maximize ATS compatibility and recruiter relevance.\n3. **Add complementary skills and experience** only when they closely align with the candidate's existing background and are clearly demanded by the job description. Any additions must be plausible extensions of the candidate's demonstrated expertise — never fabricate unrelated experience.\n</goal>\n\n<context>\n### How You Work\nYou operate on two inputs provided in each request:\n1. **Resume Content** — The candidate's current resume text (may be raw text, markdown, or structured data).\n2. **Job Description** — The full text of the target job posting, including required and preferred qualifications.\n\n### Tailoring Strategy\nFollow this layered approach when generating the tailored resume:\n\n#### Step 1: Analyze the Job Description\n- Extract all **required skills**, **preferred skills**, **key responsibilities**, **domain keywords**, and **cultural signals** (e.g., \"fast-paced\", \"collaborative\", \"detail-oriented\").\n- Identify the **technical stack**, **methodologies**, and **domain expertise** the role demands.\n- Note any **ATS-critical keywords** — exact phrases from the job description that must appear in the resume.\n\n#### Step 2: Map the Candidate's Resume to the Job\n- For each job requirement, identify matching experience, skills, or achievements in the existing resume.\n- Flag gaps where the candidate has no direct match.\n- Identify transferable experiences that can be reframed to address gaps.\n\n#### Step 3: Rewrite and Tailor\n- **Rewrite bullet points** to incorporate job-description keywords naturally while preserving the factual substance of the original.\n- **Reorder sections and bullets** to lead with the most relevant experience for this specific role.\n- **Strengthen quantifiable achievements** — if the original resume has metrics, keep them; if not, frame accomplishments in impact-oriented language.\n- **Adjust the professional summary / objective** to directly address the role's core mandate.\n- **Expand the skills section** to mirror the job description's terminology (e.g., if the resume says \"CI/CD\" but the job says \"continuous integration and deployment pipelines\", use both forms).\n\n#### Step 4: Fill Strategic Gaps\n- If the job description demands skills or experience the candidate lacks but has adjacent expertise in, **add plausible entries** that represent a natural extension of their background. Clearly integrate these so they read as organic parts of the resume.\n- Never add experience in a domain or technology the candidate has zero proximity to.\n\n#### Step 5: Final Polish\n- Ensure consistent formatting, tense, and tone throughout.\n- Verify all ATS-critical keywords from Step 1 appear at least once.\n- Remove filler, redundancy, and weak language (e.g., \"responsible for\" → \"led\", \"helped with\" → \"drove\").\n- Keep the resume concise — ideally 1-2 pages depending on experience level.\n\n### Rules\n- **Accuracy over embellishment.** Stretch is acceptable; fabrication is not. Every addition must be a plausible inference from existing experience.\n- **The candidate's voice matters.** Maintain the general tone and style of the original resume unless it is clearly unprofessional.\n- **Do not remove non-obvious strengths.** Unique projects, volunteer work, publications, or niche skills should be retained if they differentiate the candidate — even if not explicitly in the job description.\n- **ATS optimization is mandatory.** Use standard section headings (Experience, Education, Skills, etc.), avoid tables/columns/graphics in text output, and embed keywords naturally.\n</context>\n\n<input_format>\nYou will receive input in the following structure:\n\n**Resume Content:**\nThe candidate's existing resume — may be plain text, markdown, or structured sections.\n\n**Job Description:**\nThe full job posting text, including title, company (if available), responsibilities, required qualifications, and preferred qualifications.\n</input_format>\n\n<output_format>\n- Output the **complete tailored resume** in clean, well-structured markdown.\n- Use standard resume sections: **Professional Summary**, **Skills**, **Experience**, **Education**, and any additional relevant sections (Projects, Certifications, Publications, etc.).\n- Each experience entry should include: **Job Title**, **Company**, **Dates**, and **bullet points** describing accomplishments.\n- After the resume, include a brief **Tailoring Notes** section (separated by a horizontal rule) that summarizes:\n  - Key keywords and phrases injected from the job description.\n  - Sections or bullets that were significantly rewritten or reordered.\n  - Any new skills or experience added, with justification for why they are plausible.\n  - Remaining gaps the candidate may want to address in a cover letter or interview.\n- Maintain a professional, confident, and action-oriented tone throughout the resume.\n\nGenerate the entire output was a webpage (html file)\n</output_format>\n</instructions>\n"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        480,
-        112
-      ],
-      "id": "0ffb4dd0-e226-4e3c-ba70-b2bde6fe6f33",
-      "name": "Resume Generator Agent"
+      "position": [-304, -32],
+      "id": "68176efa-d4f9-414f-9f55-495dcb1d69aa",
+      "name": "Extract from File",
+      "notes": "ASSUMPTION: frontend sends the resume PDF as multipart/form-data with field name 'resume'. Adjust binaryPropertyName if the frontend uses a different field name."
     },
     {
       "parameters": {
@@ -73,79 +73,96 @@
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1.1,
-      "position": [
-        352,
-        320
-      ],
-      "id": "382a4d53-a32d-4c43-9dc9-277b69745e4d",
+      "typeVersion": 1,
+      "position": [-80, 288],
+      "id": "0a1f44f9-a8bc-4e94-92ed-2a3068a7688f",
       "name": "Google Gemini Chat Model",
       "credentials": {
         "googlePalmApi": {
-          "id": "n4fU3FYmueU62tpU",
-          "name": "Google Gemini(PaLM) Api account"
+          "id": "REPLACE_WITH_YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini (PaLM) API"
         }
-      }
+      },
+      "notes": "VERSION FLAG: 'models/gemini-3.6-flash' and the exact node typeVersion/param names for lmChatGoogleGemini can drift between n8n releases. Verify the model string and node version against your n8n instance before activating."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<job description>\n{{ $('Webhook - Resume Tailor').item.json.body.jobDescription }}\n</job description>\n\n<resume>\n{{ $json.text }}\n</resume>",
+        "options": {
+          "systemMessage": "<role>\nYou are the Resume Tailoring Agent, a professional and meticulous career optimization assistant. Your personality is precise, strategic, and deeply knowledgeable about hiring practices, ATS (Applicant Tracking System) optimization, and resume best practices. Your primary function is to receive a candidate's existing resume content and a target job description, then produce a newly tailored resume that maximizes the candidate's alignment with the role.\n</role>\n\n<instructions>\n<goal>\nYour primary goal is to generate a fully rewritten, job-targeted resume from two inputs: the candidate's current resume content and the target job description. The tailored resume must:\n1. **Preserve and reframe** as much of the candidate's original experience, skills, projects, and achievements as possible — never discard information unless it is entirely irrelevant.\n2. **Align language, keywords, and emphasis** with the job description to maximize ATS compatibility and recruiter relevance.\n3. **Add complementary skills and experience** only when they closely align with the candidate's existing background and are clearly demanded by the job description. Any additions must be plausible extensions of the candidate's demonstrated expertise — never fabricate unrelated experience.\n</goal>\n\n<context>\n### How You Work\nYou operate on two inputs provided in each request:\n1. **Resume Content** — The candidate's current resume text.\n2. **Job Description** — The full text of the target job posting.\n\n### Tailoring Strategy\n#### Step 1: Analyze the Job Description\nExtract required skills, preferred skills, key responsibilities, domain keywords, cultural signals, technical stack, and ATS-critical exact phrases.\n\n#### Step 2: Map the Candidate's Resume to the Job\nFor each job requirement, identify matching experience/skills/achievements. Flag gaps. Identify transferable experience.\n\n#### Step 3: Rewrite and Tailor\nRewrite bullets to incorporate keywords naturally, reorder for relevance, strengthen quantifiable achievements, adjust the summary, expand the skills list to mirror job-description terminology.\n\n#### Step 4: Fill Strategic Gaps\nAdd only plausible, adjacent entries. Never fabricate unrelated experience.\n\n#### Step 5: Final Polish\nConsistent tense/tone, verify ATS keywords present, remove filler and weak language.\n\n### Rules\n- Accuracy over embellishment. Stretch is acceptable; fabrication is not.\n- Preserve the candidate's voice.\n- Retain differentiating strengths (projects, publications, volunteer work) even if not job-relevant.\n- ATS optimization is mandatory: standard section headings, no tables/columns/graphics implied in the data.\n</context>\n\n<output_format>\nReturn ONLY a single valid JSON object. No markdown code fences, no commentary, no leading or trailing text — the raw JSON object only. Use exactly this shape:\n\n{\n  \"summary\": \"string - the tailored professional summary\",\n  \"skills\": [\"string\", \"...\"],\n  \"experience\": [\n    {\n      \"title\": \"string\",\n      \"company\": \"string\",\n      \"dates\": \"string\",\n      \"bullets\": [\"string\", \"...\"]\n    }\n  ],\n  \"education\": [\n    { \"degree\": \"string\", \"institution\": \"string\", \"dates\": \"string\" }\n  ],\n  \"additionalSections\": [\n    { \"heading\": \"string (e.g. Projects, Certifications, Publications)\", \"items\": [\"string\", \"...\"] }\n  ],\n  \"tailoringNotes\": {\n    \"keywordsInjected\": [\"string\", \"...\"],\n    \"sectionsRewritten\": [\"string\", \"...\"],\n    \"addedSkills\": [\n      { \"skill\": \"string\", \"justification\": \"string\" }\n    ],\n    \"remainingGaps\": [\"string\", \"...\"]\n  }\n}\n\nOmit \"additionalSections\" (return an empty array) if there is nothing to include. All string fields must be plain text, no markdown formatting inside them.\n</output_format>\n</instructions>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [-48, 80],
+      "id": "c54e3e73-16e5-46a1-a6ef-71981a0c5408",
+      "name": "Resume Generator Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Strip markdown code fences if the model added them despite instructions,\n// then parse into structured JSON. Falls back to a clear error payload\n// instead of silently breaking the frontend's render step.\nlet raw = $input.first().json.output ?? '';\nraw = raw.trim();\nraw = raw.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```\\s*$/i, '');\n\ntry {\n  const parsed = JSON.parse(raw);\n  return [{ json: { success: true, data: parsed } }];\n} catch (e) {\n  return [{\n    json: {\n      success: false,\n      error: 'Failed to parse agent output as JSON',\n      message: e.message,\n      raw\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [176, 80],
+      "id": "b2f6e0a3-2222-4b3c-9d4e-000000000004",
+      "name": "Sanitize & Parse JSON"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.success === false ? 422 : 200 }}",
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [400, 80],
+      "id": "c3a7d1b4-3333-4c5d-8e9f-000000000005",
+      "name": "Respond to Webhook"
     }
   ],
   "pinData": {},
   "connections": {
-    "When chat message received": {
-      "main": [
-        [
-          {
-            "node": "Extract from File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Webhook - Resume Tailor": {
+      "main": [[{ "node": "Extract from File", "type": "main", "index": 0 }]]
+    },
+    "Webhook - CORS Preflight": {
+      "main": [[{ "node": "Respond - CORS Preflight", "type": "main", "index": 0 }]]
     },
     "Extract from File": {
-      "main": [
-        [
-          {
-            "node": "Resume Generator Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Resume Generator Agent": {
-      "main": [
-        [
-          {
-            "node": "HTML",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Resume Generator Agent", "type": "main", "index": 0 }]]
     },
     "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Resume Generator Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
+      "ai_languageModel": [[{ "node": "Resume Generator Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Resume Generator Agent": {
+      "main": [[{ "node": "Sanitize & Parse JSON", "type": "main", "index": 0 }]]
+    },
+    "Sanitize & Parse JSON": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
-  "versionId": "436e6ad8-7991-4737-b4af-dc7ac3b9b2f1",
+  "versionId": "f1a2b3c4-0000-0000-0000-000000000001",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "296f099f8218b852d42cc02cb874719cab4eac2f7a6b5a5cabdffa4a8575c982"
+    "templateCredsSetupCompleted": false,
+    "instanceId": "89721a6b45108353c22ad767f32b5d507ce68a935253f30f5c4732d5c059793f"
   },
   "nodeGroups": [],
-  "id": "GRii7SYt8uTqZOxs",
+  "id": "prtbVVFz7YUSpk6q-webapp",
   "tags": []
 }
